@@ -21,23 +21,27 @@ namespace VulnerableUploadApplication.Controllers
             {
                 try
                 {
-                    string path = Path.Combine(Server.MapPath("~/UploadedFiles/"), file.FileName);
-                    string extension = Path.GetExtension(path); 
+                    // Upload the file using a unique identifier instead of the original file name
+                    // Now a malicious user can't traverse paths (e.g. ../../../../../etc/passwd) anymore
+                    // and can't overwrite existing files. Added benefit is that files can be renamed without changing location.
+                    // This prevents against A01:2021 – Broken Access Control
+                    string path = Path.Combine(Server.MapPath("~/UploadedFiles/"), Guid.NewGuid().ToString() + ".png");
+                    string extension = Path.GetExtension(path);
 
-                    if (extension == ".aspx" || extension == ".asp")
-                    {
-                        ViewBag.Message = "Forbidden extension!";
-                    }
-                    else if(file.ContentType != "image/png")
-                    {
-                        ViewBag.Message = "Only PNG files are allowed to be uploaded";
-                    }
-                    else
+                    // Only allow image/png files to be uploaded
+                    // Now a malicious user can't upload any executable file anymore
+                    // This prevents against A03:2021 – Injection
+                    if (file.ContentType = "image/png")
                     {
                         file.SaveAs(path);
                         ViewBag.Message = "File uploaded successfully";
                     }
-                } catch (Exception ex)
+                    else
+                    {
+                        ViewBag.Message = "Only PNG files are allowed to be uploaded";
+                    }
+                }
+                catch (Exception ex)
                 {
                     ViewBag.Message = ex.Message;
                 }
